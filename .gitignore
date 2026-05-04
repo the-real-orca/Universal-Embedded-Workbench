@@ -8,8 +8,12 @@ __pycache__/
 .claude-data/
 .claude/settings.local.json
 *.log
+.vscode
+.gemini
+.geminiignore
 
 # ESP-IDF build artifacts
 build/
 sdkconfig
 sdkconfig.old
+/log

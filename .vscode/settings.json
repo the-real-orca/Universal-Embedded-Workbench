@@ -1,0 +1,10 @@
+{
+    "vsmqtt.brokerProfiles": [
+        {
+            "name": "Workbench",
+            "host": "esp32-workbench.home",
+            "port": 1883,
+            "clientId": "vsmqtt_client_14d6"
+        }
+    ]
+}

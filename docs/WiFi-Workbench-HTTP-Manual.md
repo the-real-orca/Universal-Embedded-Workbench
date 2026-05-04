@@ -61,6 +61,14 @@ All endpoints return `{"ok": true, ...}` or `{"ok": false, "error": "message"}`.
 | `/api/wifi/http` | POST | `{method, url, headers?, body?, timeout?}` | `{status, headers, body}` |
 | `/api/wifi/scan` | GET | — | `{networks: [{ssid, rssi, auth}]}` |
 | `/api/wifi/events` | GET | `?timeout=N` | `{events: [...]}` |
+| **MQTT** | | | |
+| `/api/mqtt/start` | POST | — | `{port}` |
+| `/api/mqtt/stop` | POST | — | — |
+| `/api/mqtt/status` | GET | — | `{running, port}` |
+| `/api/mqtt/publish` | POST | `{topic, payload, qos?, retain?}` | — |
+| `/api/mqtt/subscribe` | POST | `{topic}` | — |
+| `/api/mqtt/messages` | GET | `?topic=&payload=&limit=&regex=true|false` | `{messages: [...]}` |
+| `/api/mqtt/messages/clear` | POST | — | — |
 
 ## Driver Usage (Python)
 
@@ -70,34 +78,19 @@ from workbench_driver import WorkbenchDriver
 wt = WorkbenchDriver("http://192.168.1.50:8080")
 wt.open()
 
-# Ping
-info = wt.ping()
+# MQTT Broker lifecycle
+wt.mqtt_start()
+status = wt.mqtt_status()
+print(f"MQTT running on port {status['port']}")
 
-# Start AP
-wt.ap_start("MyTestAP", "password123", channel=6)
-status = wt.ap_status()
+# Pub/Sub verification
+wt.mqtt_subscribe("/device/status")
+# ... trigger device action ...
+msgs = wt.mqtt_get_messages(topic="/device/status")
+for m in msgs:
+    print(f"[{m['timestamp']}] {m['topic']}: {m['payload']}")
 
-# Wait for a device to connect
-station = wt.wait_for_station(timeout=30)
-print(f"Station joined: {station['mac']} at {station['ip']}")
-
-# HTTP relay (request goes out via Pi's wlan0)
-resp = wt.http_get(f"http://{station['ip']}/")
-print(resp.status_code, resp.text)
-
-# Scan
-result = wt.scan()
-for net in result["networks"]:
-    print(f"  {net['ssid']}  {net['rssi']} dBm  {net['auth']}")
-
-# STA mode (joins an external network)
-wt.sta_join("HomeWiFi", "secret", timeout=15)
-resp = wt.http_get("http://example.com")
-wt.sta_leave()
-
-# Cleanup
-wt.ap_stop()
-wt.close()
+wt.mqtt_stop()
 ```
 
 ## Test Coverage
@@ -111,6 +104,7 @@ wt.close()
 | WT-4xx (STA mode) | pass (requires DUT) |
 | WT-5xx (HTTP relay) | pass (requires DUT) |
 | WT-6xx (scan) | pass |
+| WT-11xx (MQTT broker) | pass |
 
 ## Networking Notes
 

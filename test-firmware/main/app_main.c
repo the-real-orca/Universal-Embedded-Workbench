@@ -8,6 +8,7 @@
 #include "wifi_prov.h"
 #include "ble_nus.h"
 #include "http_server.h"
+#include "mqtt_test.h"
 
 static const char *TAG = "app_main";
 
@@ -54,7 +55,10 @@ void app_main(void)
     /* 7. HTTP server — /status, /ota, /wifi-reset */
     http_server_start();
 
-    /* 8. Heartbeat — periodic log to confirm firmware is alive */
+    /* 8. MQTT — connect to workbench broker */
+    mqtt_test_init();
+
+    /* 9. Heartbeat — periodic log to confirm firmware is alive */
     xTaskCreate(heartbeat_task, "heartbeat", 4096, NULL, 1, NULL);
 
     ESP_LOGI(TAG, "Init complete, running event-driven");

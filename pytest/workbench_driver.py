@@ -641,6 +641,56 @@ class WorkbenchDriver:
         """Get BLE connection state."""
         return self._api_get("/api/ble/status")
 
+    # ── MQTT ──────────────────────────────────────────────────────────
+
+    def mqtt_start(self) -> dict:
+        """Start the local MQTT broker."""
+        return self._api_post("/api/mqtt/start")
+
+    def mqtt_stop(self) -> dict:
+        """Stop the local MQTT broker."""
+        return self._api_post("/api/mqtt/stop")
+
+    def mqtt_status(self) -> dict:
+        """Get MQTT broker status."""
+        return self._api_get("/api/mqtt/status")
+
+    def mqtt_publish(self, topic: str, payload: str, qos: int = 0, retain: bool = False) -> dict:
+        """Publish an MQTT message via the workbench."""
+        return self._api_post("/api/mqtt/publish", {
+            "topic": topic,
+            "payload": payload,
+            "qos": qos,
+            "retain": retain
+        })
+
+    def mqtt_subscribe(self, topic: str) -> dict:
+        """Subscribe to a topic on the workbench broker."""
+        return self._api_post("/api/mqtt/subscribe", {"topic": topic})
+
+    def mqtt_get_messages(self, topic: str = None, payload: str = None, limit: int = 100, regex: bool = False) -> list:
+        """Retrieve captured MQTT messages from the workbench.
+        
+        If regex=True, topic and payload filters are treated as regular expressions.
+        """
+        import urllib.parse
+        params = {}
+        if topic: params["topic"] = topic
+        if payload: params["payload"] = payload
+        if limit: params["limit"] = limit
+        if regex: params["regex"] = "true"
+        
+        qs = urllib.parse.urlencode(params)
+        path = f"/api/mqtt/messages?{qs}" if qs else "/api/mqtt/messages"
+        
+        resp = self._api_get(path)
+        return resp.get("messages", [])
+
+
+    def mqtt_clear_messages(self) -> dict:
+        """Clear the workbench MQTT message buffer."""
+        return self._api_post("/api/mqtt/messages/clear")
+
     # ── Serial recovery ──────────────────────────────────────────────
 
     def serial_recover(self, slot: str) -> dict:

@@ -21,8 +21,12 @@ from datetime import datetime, timezone
 from urllib.parse import parse_qs, urlparse
 
 import debug_controller
-import gpiod
+try:
+    import gpiod
+except ImportError:
+    gpiod = None
 import wifi_controller
+import mqtt_controller
 try:
     import ble_controller
 except ImportError:
@@ -1644,6 +1648,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._handle_firmware_list()
         elif path == "/api/ble/status":
             self._handle_ble_status()
+        elif path == "/api/mqtt/status":
+            self._handle_mqtt_status()
+        elif path.startswith("/api/mqtt/messages"):
+            self._handle_mqtt_get_messages()
         elif path.startswith("/firmware/"):
             self._handle_firmware_download(path)
         elif path in ("/", "/index.html"):
@@ -1718,6 +1726,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._handle_ble_disconnect()
         elif path == "/api/ble/write":
             self._handle_ble_write()
+        elif path == "/api/mqtt/start":
+            self._handle_mqtt_start()
+        elif path == "/api/mqtt/stop":
+            self._handle_mqtt_stop()
+        elif path == "/api/mqtt/publish":
+            self._handle_mqtt_publish()
+        elif path == "/api/mqtt/subscribe":
+            self._handle_mqtt_subscribe()
+        elif path == "/api/mqtt/messages/clear":
+            self._handle_mqtt_clear_messages()
         else:
             self._send_json({"error": "not found"}, 404)
 
@@ -2780,6 +2798,71 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         result = ble_controller.write(characteristic, data, response=response)
         self._send_json(result, 200 if result.get("ok") else 500)
+
+    # -- MQTT handlers --
+
+    def _handle_mqtt_start(self):
+        try:
+            log_activity("mqtt.start()", "step")
+            result = mqtt_controller.start()
+            result["ok"] = True
+            log_activity(f"mqtt.start() — listening on port {result['port']}", "ok")
+            self._send_json(result)
+        except Exception as e:
+            log_activity(f"mqtt.start() — {e}", "error")
+            self._send_json({"ok": False, "error": str(e)}, 500)
+
+    def _handle_mqtt_stop(self):
+        log_activity("mqtt.stop()", "step")
+        mqtt_controller.stop()
+        log_activity("mqtt.stop() — done", "ok")
+        self._send_json({"ok": True})
+
+    def _handle_mqtt_status(self):
+        result = mqtt_controller.status()
+        result["ok"] = True
+        self._send_json(result)
+
+    def _handle_mqtt_publish(self):
+        body = self._read_json()
+        if not body or "topic" not in body or "payload" not in body:
+            self._send_json({"ok": False, "error": "missing topic or payload"}, 400)
+            return
+        try:
+            result = mqtt_controller.publish(
+                body["topic"], body["payload"],
+                qos=body.get("qos", 0),
+                retain=body.get("retain", False)
+            )
+            self._send_json(result)
+        except Exception as e:
+            self._send_json({"ok": False, "error": str(e)}, 500)
+
+    def _handle_mqtt_subscribe(self):
+        body = self._read_json()
+        if not body or "topic" not in body:
+            self._send_json({"ok": False, "error": "missing topic"}, 400)
+            return
+        try:
+            result = mqtt_controller.subscribe(body["topic"])
+            self._send_json(result)
+        except Exception as e:
+            self._send_json({"ok": False, "error": str(e)}, 500)
+
+    def _handle_mqtt_get_messages(self):
+        parsed = urlparse(self.path)
+        qs = parse_qs(parsed.query)
+        topic_filter = qs.get("topic", [None])[0]
+        content_filter = qs.get("payload", [None])[0]
+        limit = int(qs.get("limit", [100])[0])
+        use_regex = qs.get("regex", ["false"])[0].lower() == "true"
+        
+        messages = mqtt_controller.get_messages(topic_filter, content_filter, limit, use_regex)
+        self._send_json({"ok": True, "messages": messages})
+
+    def _handle_mqtt_clear_messages(self):
+        result = mqtt_controller.clear_messages()
+        self._send_json(result)
 
     # -- GDB debug handlers --
 

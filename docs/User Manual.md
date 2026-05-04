@@ -438,4 +438,21 @@ curl http://serial1:8080/api/wifi/mode
 curl -X POST http://serial1:8080/api/wifi/ap_stop
 ```
 
+**MQTT Broker:**
+```bash
+# Start broker
+curl -X POST http://serial1:8080/api/mqtt/start
+
+# Check status
+curl http://serial1:8080/api/mqtt/status
+
+# Publish a message
+curl -X POST http://serial1:8080/api/mqtt/publish \
+  -H 'Content-Type: application/json' \
+  -d '{"topic": "/test", "payload": "hello"}'
+
+# Stop broker
+curl -X POST http://serial1:8080/api/mqtt/stop
+```
+
 **Web portal:** Open `http://serial1:8080` in a browser.

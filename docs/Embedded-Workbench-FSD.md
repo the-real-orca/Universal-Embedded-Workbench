@@ -796,6 +796,14 @@ serial-interface mode.
 | POST | /api/wifi/http | HTTP relay through Pi's radio |
 | GET | /api/wifi/events | Event queue (long-poll supported) |
 | POST | /api/wifi/lease_event | Receive dnsmasq lease callback |
+| **MQTT** | | |
+| POST | /api/mqtt/start | Start local Mosquitto broker |
+| POST | /api/mqtt/stop | Stop local Mosquitto broker |
+| GET | /api/mqtt/status | Broker status (running/port) |
+| POST | /api/mqtt/publish | Publish MQTT message via internal client |
+| POST | /api/mqtt/subscribe | Subscribe internal client to topic |
+| GET | /api/mqtt/messages | Retrieve captured MQTT messages (supports `topic`, `payload`, `limit`, `regex` query params) |
+| POST | /api/mqtt/messages/clear | Clear message buffer |
 | **Human Interaction** | | |
 | POST | /api/human-interaction | Block until operator confirms a physical action (FR-017) |
 | GET | /api/human/status | Check if a human interaction request is pending |

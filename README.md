@@ -466,7 +466,7 @@ curl -X POST http://workbench.local:8080/api/siggen/stop
 All endpoints are served from `http://<pi-ip>:8080`. No authentication. All requests and responses use JSON (except the firmware upload/download which use multipart form-data and raw binary). Every response includes an `"ok": true|false` field; errors add `"error": "..."`.
 
 Sub-chapters:
-[1. Device Discovery](#1-device-discovery) · [2. Serial Management](#2-serial-management) · [3. GDB Debug](#3-gdb-debug) · [4. WiFi Instrument](#4-wifi-instrument) · [5. BLE Proxy](#5-ble-proxy) · [6. GPIO Control](#6-gpio-control) · [7. UDP Log](#7-udp-log) · [8. Firmware Repository](#8-firmware-repository) · [9. Signal Generator](#9-signal-generator) · [10. Test Progress](#10-test-progress) · [11. Human Interaction](#11-human-interaction) · [12. Activity Log](#12-activity-log)
+[1. Device Discovery](#1-device-discovery) · [2. Serial Management](#2-serial-management) · [3. GDB Debug](#3-gdb-debug) · [4. WiFi Instrument](#4-wifi-instrument) · [5. BLE Proxy](#5-ble-proxy) · [6. GPIO Control](#6-gpio-control) · [7. UDP Log](#7-udp-log) · [8. Firmware Repository](#8-firmware-repository) · [9. Signal Generator](#9-signal-generator) · [10. Test Progress](#10-test-progress) · [11. Human Interaction](#11-human-interaction) · [12. Activity Log](#12-activity-log) · [13. MQTT Broker](#13-mqtt-broker)
 
 ---
 
@@ -675,6 +675,26 @@ Blocks a test script until the operator confirms a physical action on the Pi.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/log` | Recent activity entries `?since=<iso-timestamp>` |
+
+---
+
+### 13. MQTT Broker
+
+The workbench includes a managed mosquitto MQTT broker for testing ESP32 MQTT clients. It captures all traffic and provides an internal client for pub/sub verification.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/mqtt/start` | Start the MQTT broker on port 1883 |
+| POST | `/api/mqtt/stop` | Stop the MQTT broker |
+| GET | `/api/mqtt/status` | `{"running", "port", "internal_client": {"running", "library_available"}}` |
+| POST | `/api/mqtt/publish` | Publish a message `{"topic", "payload", "qos?", "retain?"}` |
+| POST | `/api/mqtt/subscribe` | Subscribe the internal client to a topic `{"topic"}` |
+| GET | `/api/mqtt/messages` | Fetch captured messages `?topic=&payload=&limit=&regex=true|false` |
+| POST | `/api/mqtt/messages/clear` | Clear the captured message buffer |
+
+**Message Filtering:**
+
+When fetching messages, you can filter by topic or payload substring. If `regex=true` is passed, filters are treated as Python regular expressions.
 
 ---
 
