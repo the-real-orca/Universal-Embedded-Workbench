@@ -69,6 +69,10 @@ All endpoints return `{"ok": true, ...}` or `{"ok": false, "error": "message"}`.
 | `/api/mqtt/subscribe` | POST | `{topic}` | — |
 | `/api/mqtt/messages` | GET | `?topic=&payload=&limit=&regex=true|false` | `{messages: [...]}` |
 | `/api/mqtt/messages/clear` | POST | — | — |
+| **Test Progress** | | | |
+| `/api/test/update` | POST | `{spec, total, ...}` | — |
+| `/api/test/progress` | GET | — | `{active, spec, phase, total, completed, ...}` |
+| `/api/test/progress` | DELETE | — | — |
 
 ## Driver Usage (Python)
 
@@ -78,9 +82,16 @@ from workbench_driver import WorkbenchDriver
 wt = WorkbenchDriver("http://192.168.1.50:8080")
 wt.open()
 
+# Test Progress Tracking
+wt.test_start("Modbus Proxy v1.4", "Integration", total=10)
+wt.test_step("TC-001", "WiFi Connect", "Joining AP...")
+# ... perform test ...
+wt.test_result("TC-001", "WiFi Connect", "PASS")
+wt.test_end()
+
 # MQTT Broker lifecycle
 wt.mqtt_start()
-status = wt.mqtt_status()
+```,old_string:
 print(f"MQTT running on port {status['port']}")
 
 # Pub/Sub verification

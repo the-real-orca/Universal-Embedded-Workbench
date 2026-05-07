@@ -409,6 +409,24 @@ class WorkbenchDriver:
         """End the test session."""
         return self._api_post("/api/test/update", {"end": True})
 
+    def test_progress(self) -> dict:
+        """GET /api/test/progress — poll current test session state."""
+        return self._api_get("/api/test/progress")
+
+    def test_clear(self) -> dict:
+        """DELETE /api/test/progress — clear the stored test report."""
+        url = f"{self.base_url}/api/test/progress"
+        req = urllib.request.Request(url, method="DELETE")
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+        except Exception as e:
+            raise CommandTimeout(f"DELETE /api/test/progress: {e}")
+
+        if not data.get("ok", False):
+            raise CommandError("test_clear", data)
+        return data
+
     # ── GPIO control ──────────────────────────────────────────────────
 
     def gpio_set(self, pin: int, value) -> dict:
