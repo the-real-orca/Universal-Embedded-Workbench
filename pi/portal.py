@@ -54,6 +54,7 @@ STATE_ABSENT     = "absent"
 STATE_IDLE       = "idle"
 STATE_RESETTING  = "resetting"
 STATE_MONITORING = "monitoring"
+STATE_WRITING    = "writing"
 STATE_FLAPPING      = "flapping"
 STATE_RECOVERING    = "recovering"
 STATE_DOWNLOAD_MODE = "download_mode"
@@ -1275,6 +1276,7 @@ def serial_write(slot: dict, data: str, pattern: str | None = None,
     if pattern and not timeout:
         timeout = 10.0
 
+    slot["state"] = STATE_WRITING
     try:
         ser = pyserial.serial_for_url(rfc2217_url, do_not_open=True)
         ser.baudrate = 115200
@@ -1313,6 +1315,9 @@ def serial_write(slot: dict, data: str, pattern: str | None = None,
         ser.close()
     except Exception as e:
         return {"ok": False, "error": f"Cannot connect/write to {rfc2217_url}: {e}"}
+    finally:
+        slot["state"] = STATE_IDLE if slot["present"] else STATE_ABSENT
+
 
     result = {"ok": True, "output": lines}
     if pattern:
@@ -3038,6 +3043,7 @@ _UI_HTML = """\
         .slot.running { border-color: #00d4ff; box-shadow: 0 0 20px rgba(0,212,255,0.2); }
         .slot.resetting { border-color: #e67e22; box-shadow: 0 0 20px rgba(230,126,34,0.2); }
         .slot.monitoring { border-color: #9b59b6; box-shadow: 0 0 20px rgba(155,89,182,0.2); }
+        .slot.writing { border-color: #9b59b6; box-shadow: 0 0 20px rgba(182,89,155,0.2); }
         .slot.flapping { border-color: #e74c3c; background: #1a0000; }
         .slot.recovering {
             border-color: #e67e22; background: #1a1000;
@@ -3063,6 +3069,7 @@ _UI_HTML = """\
         .status.running { background: #00d4ff; color: #1a1a2e; }
         .status.resetting { background: #e67e22; color: #fff; }
         .status.monitoring { background: #9b59b6; color: #fff; }
+        .status.writing { background: #b6599b; color: #fff; }
         .status.flapping { background: #e74c3c; color: #fff; }
         .status.recovering { background: #e67e22; color: #fff; }
         .status.download_mode { background: #2ecc71; color: #1a1a2e; }
@@ -3328,6 +3335,8 @@ function statusLabel(s) {
     const labels = {
         'recovering': 'RECOVERING',
         'download_mode': 'DOWNLOAD MODE',
+        'monitoring': 'MONITORING',
+        'writing': 'WRITING',
     };
     return labels[st] || st.toUpperCase();
 }
@@ -3407,7 +3416,7 @@ function renderSlots(slots) {
             </div>
             <div class="url-box ${s.running || st === 'idle' || st === 'download_mode' ? '' : 'empty'}"
                  onclick="${s.running || st === 'idle' ? "copyUrl('" + copyTarget + "',this)" : ''}">
-                ${s.running || st === 'idle' ? ipUrl || 'Proxy running' : (st === 'download_mode' ? 'In download mode — flash via RFC2217' : (s.present || st === 'resetting' || st === 'monitoring' ? 'Device present, proxy not running' : (st === 'recovering' ? 'USB unbound — recovering...' : 'No device connected')))}
+                ${s.running || st === 'idle' ? ipUrl || 'Proxy running' : (st === 'download_mode' ? 'In download mode — flash via RFC2217' : (s.present || st === 'resetting' || st === 'monitoring' || st === 'writing' ? 'Device present, proxy not running' : (st === 'recovering' ? 'USB unbound — recovering...' : 'No device connected')))}
             </div>
             ${s.last_error ? '<div class="error">Error: ' + s.last_error + '</div>' : ''}
             ${statusMsg}
@@ -3686,11 +3695,15 @@ async function siggenAtten(val) {
     } catch (e) { /* ignore */ }
 }
 
-async function refresh() {
+async function adaptiveRefresh() {
     await Promise.all([fetchDevices(), fetchLog(), fetchHuman(), fetchTestProgress(), fetchSiggen()]);
+    
+    // Check if a test session is active from the last fetch
+    const progData = await fetch('/api/test/progress').then(r => r.json());
+    const interval = (progData.active) ? 500 : 2500;
+    setTimeout(adaptiveRefresh, interval);
 }
-refresh();
-setInterval(refresh, 5000);
+adaptiveRefresh();
 </script>
 </body>
 </html>
