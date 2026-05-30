@@ -17,3 +17,9 @@ build/
 sdkconfig
 sdkconfig.old
 /log
+/.devcontainer/devcontainer-lock.json
+/AGENTS.md
+/Dockerfile
+/GEMINI.md
+/docker-compose.yml
+/plan.md

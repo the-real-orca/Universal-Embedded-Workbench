@@ -1,0 +1,60 @@
+### First Test
+GET http://microsoft.com HTTP/1.1
+
+
+### Scan WIFI
+GET http://esp32-workbench.home:8080/api/wifi/scan
+
+
+### Serial Monitor
+POST http://esp32-workbench.home:8080/api/serial/monitor
+Content-Type: application/json
+
+{
+"slot":"SLOT1",
+"timeout":5
+}
+
+
+
+### MQQT Status
+http://esp32-workbench.home:8080/api/mqtt/status
+
+
+### Start broker
+POST http://esp32-workbench.home:8080/api/mqtt/start
+
+### Subscribe to a topic
+POST http://esp32-workbench.home:8080/api/mqtt/subscribe
+Content-Type: application/json
+
+{
+    "topic": "/test", 
+    "qos": 0
+}
+
+### Get Messages
+GET http://esp32-workbench.home:8080/api/mqtt/messages?limit=10
+
+### Get Messages filtered by Topic
+GET http://esp32-workbench.home:8080/api/mqtt/messages?limit=10&topic=/#
+
+### Get Messages filtered by Payload
+GET http://esp32-workbench.home:8080/api/mqtt/messages?limit=10&payload=hello
+
+### Clear Messages
+POST http://esp32-workbench.home:8080/api/mqtt/messages/clear
+
+
+### Publish a message
+POST http://esp32-workbench.home:8080/api/mqtt/publish
+Content-Type: application/json
+
+{
+    "topic": "/test", 
+    "payload": "hello2"
+}
+
+### Stop broker
+POST http://esp32-workbench.home:8080/api/mqtt/stop
+
