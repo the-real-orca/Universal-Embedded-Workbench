@@ -28,6 +28,7 @@ sudo python3 .claude/skills/esp-idf-handling/discover-workbench.py --hosts
 | POST | `/api/ble/scan` | Scan for BLE devices (optional name filter) |
 | POST | `/api/ble/connect` | Connect to a device by MAC address |
 | POST | `/api/ble/write` | Write hex data to a GATT characteristic |
+| POST | `/api/ble/read` | Read hex data from a GATT characteristic |
 | POST | `/api/ble/disconnect` | Disconnect current device |
 | GET | `/api/ble/status` | Connection state and device info |
 

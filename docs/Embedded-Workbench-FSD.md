@@ -1347,6 +1347,7 @@ State transitions:
 | POST | /api/ble/disconnect | Disconnect from current peripheral |
 | GET | /api/ble/status | Connection state and device info |
 | POST | /api/ble/write | Write raw bytes to a GATT characteristic |
+| POST | /api/ble/read | Read raw bytes from a GATT characteristic |
 
 **POST /api/ble/scan** body (optional):
 ```json

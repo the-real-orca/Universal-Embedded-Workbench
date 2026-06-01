@@ -573,6 +573,7 @@ Controls the Pi's wlan0 radio. Access Point and Station modes are mutually exclu
 | POST | `/api/ble/disconnect` | Disconnect current connection |
 | GET | `/api/ble/status` | `{"state": "idle"|"scanning"|"connected", "address?"}` |
 | POST | `/api/ble/write` | Write to a GATT characteristic `{"characteristic", "data", "response?"}` (data as hex string) |
+| POST | `/api/ble/read` | Read from a GATT characteristic `{"characteristic"}` (returns hex string) |
 
 One BLE connection at a time. Requires `rfkill unblock bluetooth`.
 

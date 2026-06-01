@@ -1732,6 +1732,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._handle_ble_disconnect()
         elif path == "/api/ble/write":
             self._handle_ble_write()
+        elif path == "/api/ble/read":
+            self._handle_ble_read()
         elif path == "/api/mqtt/start":
             self._handle_mqtt_start()
         elif path == "/api/mqtt/stop":
@@ -2828,6 +2830,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json({"ok": False, "error": "invalid hex data"}, 400)
             return
         result = ble_controller.write(characteristic, data, response=response)
+        self._send_json(result, 200 if result.get("ok") else 500)
+
+    def _handle_ble_read(self):
+        if not ble_controller or not ble_controller.available():
+            self._send_json({"ok": False, "error": "BLE not available (bleak not installed)"}, 501)
+            return
+        body = self._read_json() or {}
+        characteristic = body.get("characteristic", "")
+        if not characteristic:
+            self._send_json({"ok": False, "error": "missing characteristic"}, 400)
+            return
+        
+        log_activity(f"ble.read({characteristic})", "step")
+        result = ble_controller.read(characteristic)
+        if result.get("ok"):
+            log_activity(f"ble.read({characteristic}) — success", "ok")
+        else:
+            log_activity(f"ble.read({characteristic}) — {result.get('error')}", "error")
         self._send_json(result, 200 if result.get("ok") else 500)
 
     # -- MQTT handlers --
